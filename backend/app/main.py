@@ -4,8 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.converter import extract_to_markdown, SUPPORTED_TYPES
 from app.masking import mask_text
 
+from pathlib import Path
+
+# Create a new instance of FastAPI
 app = FastAPI()
 
+
+# CORS Middleware from FastAPI to be able to communicate to the Frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -15,6 +20,7 @@ app.add_middleware(
 )
 
 
+# GET HTTP request to the root path, which simply sends a message
 @app.get("/")
 def read_root():
     return {"message": "Hello world ich schreibe was:)"}
@@ -25,7 +31,6 @@ async def upload_document(
     file: UploadFile = File(...),
     language: str = Query(default="en", description="Sprache für PII-Erkennung (en / de)"),
 ):
-    from pathlib import Path
 
     content_type = file.content_type or ""
     filename = file.filename or ""
