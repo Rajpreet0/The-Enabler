@@ -2,7 +2,12 @@ import re
 from dataclasses import dataclass
 from functools import lru_cache
 
-from presidio_analyzer import AnalyzerEngine, RecognizerResult, PatternRecognizer, Pattern
+from presidio_analyzer import (
+    AnalyzerEngine,
+    RecognizerResult,
+    PatternRecognizer,
+    Pattern,
+)
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import OperatorConfig
@@ -18,47 +23,78 @@ ENTITIES = [
 ]
 
 HIGHLIGHT_COLORS: dict[str, str] = {
-    "PERSON":        "🟥",
+    "PERSON": "🟥",
     "EMAIL_ADDRESS": "🟦",
-    "PHONE_NUMBER":  "🟨",
-    "LOCATION":      "🟩",
-    "IBAN_CODE":     "🟪",
-    "ORGANIZATION":  "🟧",
-    "ADDRESS":       "🟫",
+    "PHONE_NUMBER": "🟨",
+    "LOCATION": "🟩",
+    "IBAN_CODE": "🟪",
+    "ORGANIZATION": "🟧",
+    "ADDRESS": "🟫",
 }
 
 ANONYMIZE_LABELS: dict[str, str] = {
-    "PERSON":        "[PERSON]",
+    "PERSON": "[PERSON]",
     "EMAIL_ADDRESS": "[EMAIL]",
-    "PHONE_NUMBER":  "[TELEFON]",
-    "LOCATION":      "[ORT]",
-    "IBAN_CODE":     "[IBAN]",
-    "ORGANIZATION":  "[FIRMA]",
-    "ADDRESS":       "[ADRESSE]",
+    "PHONE_NUMBER": "[TELEFON]",
+    "LOCATION": "[ORT]",
+    "IBAN_CODE": "[IBAN]",
+    "ORGANIZATION": "[FIRMA]",
+    "ADDRESS": "[ADRESSE]",
 }
 
 # Mindest-Score damit ein Treffer akzeptiert wird
 _MIN_SCORE: dict[str, float] = {
-    "PERSON":        0.7,
-    "LOCATION":      0.7,
-    "ORGANIZATION":  0.75,
+    "PERSON": 0.7,
+    "LOCATION": 0.7,
+    "ORGANIZATION": 0.75,
     "EMAIL_ADDRESS": 0.5,
-    "PHONE_NUMBER":  0.5,
-    "IBAN_CODE":     0.5,
-    "ADDRESS":       0.55,
+    "PHONE_NUMBER": 0.5,
+    "IBAN_CODE": 0.5,
+    "ADDRESS": 0.55,
 }
 
 # Wörter die NIEMALS als PERSON/LOCATION/ORGANIZATION durchgehen
 _FALSE_POSITIVE_WORDS = {
     # Deutsche Dokument-Begriffe
-    "diese", "dieser", "dieses", "hinweise", "hinweis", "datum", "betreff",
-    "prüfcode", "pruefcode", "matrikelnummer", "semesterzeitraum", "beurlaubt",
-    "nachname", "vorname", "geburtsdatum", "fachsemester", "studienfach",
-    "abschluss", "bescheinigung", "unterschrift", "stempel", "webseite",
-    "verifikation", "nutzung", "genannte", "person", "dezernat", "referat",
-    "studium", "lehre", "hochschulrecht", "studierendenangelegenheiten",
-    "präsidentin", "präsident", "wintersommer", "wintersemester", "sommersemester",
-    "informatik", "semester",
+    "diese",
+    "dieser",
+    "dieses",
+    "hinweise",
+    "hinweis",
+    "datum",
+    "betreff",
+    "prüfcode",
+    "pruefcode",
+    "matrikelnummer",
+    "semesterzeitraum",
+    "beurlaubt",
+    "nachname",
+    "vorname",
+    "geburtsdatum",
+    "fachsemester",
+    "studienfach",
+    "abschluss",
+    "bescheinigung",
+    "unterschrift",
+    "stempel",
+    "webseite",
+    "verifikation",
+    "nutzung",
+    "genannte",
+    "person",
+    "dezernat",
+    "referat",
+    "studium",
+    "lehre",
+    "hochschulrecht",
+    "studierendenangelegenheiten",
+    "präsidentin",
+    "präsident",
+    "wintersommer",
+    "wintersemester",
+    "sommersemester",
+    "informatik",
+    "semester",
 }
 
 # Straßen-Keywords
@@ -98,7 +134,7 @@ def _build_org_recognizer() -> PatternRecognizer:
             Pattern(
                 name="de_org_suffix",
                 regex=r"\b[A-ZÄÖÜ][A-Za-zäöüÄÖÜß&\s\-\.]{2,50}"
-                      r"(?:GmbH|AG|KG|OHG|UG|e\.V\.|gGmbH|SE)(?:\s*&\s*Co\.?\s*KG)?\b",
+                r"(?:GmbH|AG|KG|OHG|UG|e\.V\.|gGmbH|SE)(?:\s*&\s*Co\.?\s*KG)?\b",
                 score=0.88,
             ),
         ],
@@ -163,7 +199,7 @@ def mask_text(text: str, language: str = "en") -> MaskingResult:
             "start": r.start,
             "end": r.end,
             "score": round(r.score, 2),
-            "original": text[r.start:r.end],
+            "original": text[r.start : r.end],
         }
         for r in sorted(all_results, key=lambda r: r.start)
     ]
@@ -181,9 +217,9 @@ def mask_text(text: str, language: str = "en") -> MaskingResult:
     preview_chars = list(text)
     for r in sorted(all_results, key=lambda r: r.start, reverse=True):
         icon = HIGHLIGHT_COLORS.get(r.entity_type, "🔶")
-        original = text[r.start:r.end]
+        original = text[r.start : r.end]
         replacement = f"{icon}`{original}`{icon}"
-        preview_chars[r.start:r.end] = list(replacement)
+        preview_chars[r.start : r.end] = list(replacement)
 
     return MaskingResult(
         preview="".join(preview_chars),
@@ -192,11 +228,13 @@ def mask_text(text: str, language: str = "en") -> MaskingResult:
     )
 
 
-def _filter_results(results: list[RecognizerResult], text: str) -> list[RecognizerResult]:
+def _filter_results(
+    results: list[RecognizerResult], text: str
+) -> list[RecognizerResult]:
     """Filtert False Positives und schwache Treffer."""
     kept = []
     for r in results:
-        span = text[r.start:r.end].strip()
+        span = text[r.start : r.end].strip()
 
         # Score-Schwelle prüfen
         min_score = _MIN_SCORE.get(r.entity_type, 0.5)
@@ -235,11 +273,11 @@ def _extract_person_names(results: list[RecognizerResult], text: str) -> set[str
     for r in results:
         if r.entity_type != "PERSON":
             continue
-        span = text[r.start:r.end].strip()
+        span = text[r.start : r.end].strip()
         names.add(span)
         m = _STREET_KEYWORDS.search(span)
         if m:
-            clean = span[:m.start()].strip()
+            clean = span[: m.start()].strip()
             if clean:
                 names.add(clean)
     return names
@@ -277,17 +315,21 @@ def _find_addresses_in_text(text: str) -> list[RecognizerResult]:
     return found
 
 
-def _trim_person_spans(results: list[RecognizerResult], text: str) -> list[RecognizerResult]:
+def _trim_person_spans(
+    results: list[RecognizerResult], text: str
+) -> list[RecognizerResult]:
     """Kürzt PERSON-Spans die Straßen-Keywords enthalten."""
     trimmed = []
     for r in results:
         if r.entity_type == "PERSON":
-            span = text[r.start:r.end]
+            span = text[r.start : r.end]
             m = _STREET_KEYWORDS.search(span)
             if m:
-                clean = span[:m.start()].strip()
+                clean = span[: m.start()].strip()
                 if clean and len(clean.split()) >= 2:
-                    r = RecognizerResult("PERSON", r.start, r.start + len(clean), r.score)
+                    r = RecognizerResult(
+                        "PERSON", r.start, r.start + len(clean), r.score
+                    )
                 else:
                     continue
         trimmed.append(r)
@@ -295,18 +337,19 @@ def _trim_person_spans(results: list[RecognizerResult], text: str) -> list[Recog
 
 
 _ENTITY_PRIORITY = {
-    "ADDRESS":       5,
-    "ORGANIZATION":  4,
-    "IBAN_CODE":     4,
+    "ADDRESS": 5,
+    "ORGANIZATION": 4,
+    "IBAN_CODE": 4,
     "EMAIL_ADDRESS": 4,
-    "PHONE_NUMBER":  4,
-    "PERSON":        3,
-    "LOCATION":      2,
+    "PHONE_NUMBER": 4,
+    "PERSON": 3,
+    "LOCATION": 2,
 }
 
 
 def _resolve_overlaps(results: list[RecognizerResult]) -> list[RecognizerResult]:
     """Löst Überlappungen auf — höhere Priorität dann Score gewinnt."""
+
     def rank(r: RecognizerResult) -> tuple:
         return (_ENTITY_PRIORITY.get(r.entity_type, 1), r.score)
 

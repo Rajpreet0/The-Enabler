@@ -5,7 +5,12 @@ from typing import BinaryIO
 
 from unstructured.partition.auto import partition
 from unstructured.documents.elements import (
-    Title, NarrativeText, ListItem, Table, Image, PageBreak, Element
+    Title,
+    ListItem,
+    Table,
+    Image,
+    PageBreak,
+    Element,
 )
 
 SUPPORTED_TYPES = {

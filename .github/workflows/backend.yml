@@ -1,0 +1,54 @@
+name: Backend CI
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend.yml"
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff pytest httpx
+
+      - name: Get spaCy model cache path
+        id: spacy-path
+        run: echo "dir=$(python -c 'import site; print(site.getsitepackages()[0])')" >> $GITHUB_OUTPUT
+
+      - name: Cache spaCy models
+        id: spacy-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ steps.spacy-path.outputs.dir }}/en_core_web_lg
+            ${{ steps.spacy-path.outputs.dir }}/de_core_news_lg
+          key: spacy-models-${{ hashFiles('backend/requirements.txt') }}
+
+      - name: Download spaCy models
+        if: steps.spacy-cache.outputs.cache-hit != 'true'
+        run: |
+          python -m spacy download en_core_web_lg
+          python -m spacy download de_core_news_lg
+
+      - name: Lint (ruff)
+        run: ruff check app/
+
