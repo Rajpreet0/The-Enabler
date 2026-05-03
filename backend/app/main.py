@@ -29,7 +29,9 @@ def read_root():
 @app.post("/upload")
 async def upload_document(
     file: UploadFile = File(...),
-    language: str = Query(default="en", description="Sprache für PII-Erkennung (en / de)"),
+    language: str = Query(
+        default="en", description="Sprache für PII-Erkennung (en / de)"
+    ),
 ):
 
     content_type = file.content_type or ""
@@ -42,13 +44,15 @@ async def upload_document(
         raise HTTPException(
             status_code=415,
             detail=f"Nicht unterstützter Dateityp: {content_type or suffix}. "
-                   f"Erlaubt: PDF, DOCX, DOC, PNG, JPG, TIFF, BMP, WEBP",
+            f"Erlaubt: PDF, DOCX, DOC, PNG, JPG, TIFF, BMP, WEBP",
         )
 
     try:
         markdown = extract_to_markdown(file.file, content_type, filename)
     except Exception as exc:
-        raise HTTPException(status_code=422, detail=f"Fehler beim Verarbeiten der Datei: {exc}")
+        raise HTTPException(
+            status_code=422, detail=f"Fehler beim Verarbeiten der Datei: {exc}"
+        )
 
     try:
         masking = mask_text(markdown, language=language)

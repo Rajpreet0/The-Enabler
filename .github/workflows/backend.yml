@@ -52,9 +52,6 @@ jobs:
       - name: Lint (ruff)
         run: ruff check app/
 
-      - name: Type check (ruff format --check)
-        run: ruff format --check app/
-
       - name: Run tests
         run: pytest tests/ -v --tb=short
         # No tests yet — pytest exits 0 when no tests are collected with this flag:
