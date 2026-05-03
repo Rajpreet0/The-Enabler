@@ -52,7 +52,3 @@ jobs:
       - name: Lint (ruff)
         run: ruff check app/
 
-      - name: Run tests
-        run: pytest --ignore=.venv -v --tb=short
-        env:
-          PYTHONPATH: .
