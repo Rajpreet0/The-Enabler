@@ -53,7 +53,6 @@ jobs:
         run: ruff check app/
 
       - name: Run tests
-        run: pytest tests/ -v --tb=short
-        # No tests yet — pytest exits 0 when no tests are collected with this flag:
+        run: pytest --ignore=.venv -v --tb=short
         env:
           PYTHONPATH: .
