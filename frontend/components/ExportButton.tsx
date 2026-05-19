@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Download, FileText, File } from "lucide-react";
 
+/*----------------- TYPES -----------------*/
 interface Props {
   text: string;
   filename: string;
@@ -10,15 +11,19 @@ interface Props {
 
 type Format = "txt" | "pdf";
 
+// Available Exports for Frontend Display
 const FORMATS: { id: Format; label: string; icon: React.ReactNode; ext: string }[] = [
   { id: "txt", label: "TXT",  icon: <FileText className="h-3.5 w-3.5" />, ext: ".txt" },
   { id: "pdf", label: "PDF",  icon: <File className="h-3.5 w-3.5" />,     ext: ".pdf" },
 ];
 
 export default function ExportButton({ text, filename }: Props) {
+  
+  /*----------------- STATES -----------------*/
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<Format | null>(null);
 
+  // Take Filename and put "_anonymized" at the end
   const baseName = filename.replace(/\.[^.]+$/, "") + "_anonymized";
 
   const exportTxt = () => {
@@ -51,6 +56,11 @@ export default function ExportButton({ text, filename }: Props) {
     doc.save(baseName + ".pdf");
   };
 
+  /**
+   * Creates a Link for the Document and instantly downloads it
+   * @param blob - Raw Binary Data 
+   * @param name - Filename (with _anonymized)
+   */
   const trigger = (blob: Blob, name: string) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -60,6 +70,10 @@ export default function ExportButton({ text, filename }: Props) {
     URL.revokeObjectURL(url);
   };
 
+  /**
+   * Calls the specifc Export Function based on the Format
+   * @param format - File Format (e.x .txt or .pdf)
+   */
   const handleExport = async (format: Format) => {
     setLoading(format);
     setOpen(false);

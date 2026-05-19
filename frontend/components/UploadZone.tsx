@@ -12,6 +12,7 @@ interface Props {
 }
 
 export default function UploadZone({ onResult }: Props) {
+  /*-------------- STATES --------------*/
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
