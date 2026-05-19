@@ -76,6 +76,8 @@ python -m spacy download de_core_news_lg
 
 # Server starten
 uvicorn app.main:app --reload
+# Auf Mac
+python -m uvicorn app.main:app --reload
 ```
 
 Backend läuft auf: `http://localhost:8000`

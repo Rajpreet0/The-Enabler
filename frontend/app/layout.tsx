@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Google_Sans } from "next/font/google";
 import "./globals.css";
+import NavBar from "@/components/NavBar";
+import Footer from "@/components/Footer";
 
 const googleSans = Google_Sans({
   subsets: ["latin"],
@@ -17,11 +19,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${googleSans.className} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
-    </html>
+    <>
+      <NavBar/>
+      <html
+        lang="en"
+        className={`${googleSans.className} h-full antialiased`}
+      >
+        <body className="min-h-full flex flex-col">{children}</body>
+      </html>
+      <Footer/>
+    </>
   );
 }

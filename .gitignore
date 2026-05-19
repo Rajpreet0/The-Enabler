@@ -19,6 +19,8 @@ backend/dist/
 node_modules
 package-lock.json
 
+start_project.sh
+
 
 .DS_Store
 Thumbs.db
