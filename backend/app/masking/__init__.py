@@ -12,7 +12,7 @@ the pipeline or extend it with your own steps.
 
 from dataclasses import dataclass
 
-from .config import ENTITY_CONFIG, ENTITIES
+from .config import ENTITIES
 from .engines import get_engines
 from .pipeline import MaskingPipeline
 from .steps import DEFAULT_PIPELINE
