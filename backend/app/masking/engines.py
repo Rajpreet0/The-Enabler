@@ -1,10 +1,11 @@
 from functools import lru_cache
- 
+
 from presidio_analyzer import AnalyzerEngine, PatternRecognizer, Pattern
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
- 
+
 from .config import ADDRESS_RE, PLZ_RE
+from .transformer_recognizer import GermanFlairNERRecognizer
 
 # ---------------------------------------------------------------------------
 # Custom recognizers — extend Presidio with German-specific regex patterns
@@ -59,5 +60,6 @@ def get_engines() -> tuple[AnalyzerEngine, AnonymizerEngine]:
     analyzer = AnalyzerEngine(nlp_engine=nlp_engine, supported_languages=["en", "de"])
     analyzer.registry.add_recognizer(_build_address_recognizer())
     analyzer.registry.add_recognizer(_build_org_recognizer())
+    analyzer.registry.add_recognizer(GermanFlairNERRecognizer())
     anonymizer = AnonymizerEngine()
     return analyzer, anonymizer

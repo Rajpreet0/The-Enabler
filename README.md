@@ -72,7 +72,7 @@ pip install -r requirements.txt
 
 # spaCy-Sprachmodelle herunterladen
 python -m spacy download en_core_web_lg
-python -m spacy download de_core_news_lg
+python -m spacy download de_dep_news_trf
 
 # Server starten
 uvicorn app.main:app --reload
