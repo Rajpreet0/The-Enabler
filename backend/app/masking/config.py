@@ -1,3 +1,4 @@
+import os
 import re
 from dataclasses import dataclass
 
@@ -10,16 +11,27 @@ class EntityConfig:
     color: str        # Emoji color used in the preview highlight
     min_score: float  # Minimum confidence score to accept a hit
     priority: int     # Overlap resolution priority (higher = wins)
- 
- 
+
+
+def _threshold(env_key: str, default: float) -> float:
+    """Return threshold from env var (e.g. THRESHOLD_PERSON=0.85) or default."""
+    raw = os.environ.get(env_key)
+    if raw is not None:
+        try:
+            return float(raw)
+        except ValueError:
+            pass
+    return default
+
+
 ENTITY_CONFIG: dict[str, EntityConfig] = {
-    "PERSON":        EntityConfig("[PERSON]",  "🟥", 0.7,  3),
-    "EMAIL_ADDRESS": EntityConfig("[EMAIL]",   "🟦", 0.5,  4),
-    "PHONE_NUMBER":  EntityConfig("[TELEFON]", "🟨", 0.5,  4),
-    "LOCATION":      EntityConfig("[ORT]",     "🟩", 0.7,  2),
-    "IBAN_CODE":     EntityConfig("[IBAN]",    "🟪", 0.5,  4),
-    "ORGANIZATION":  EntityConfig("[FIRMA]",   "🟧", 0.75, 4),
-    "ADDRESS":       EntityConfig("[ADRESSE]", "🟫", 0.55, 5),
+    "PERSON":        EntityConfig("[PERSON]",  "🟥", _threshold("THRESHOLD_PERSON",       0.80), 3),
+    "EMAIL_ADDRESS": EntityConfig("[EMAIL]",   "🟦", _threshold("THRESHOLD_EMAIL_ADDRESS", 0.50), 4),
+    "PHONE_NUMBER":  EntityConfig("[TELEFON]", "🟨", _threshold("THRESHOLD_PHONE_NUMBER",  0.50), 4),
+    "LOCATION":      EntityConfig("[ORT]",     "🟩", _threshold("THRESHOLD_LOCATION",      0.75), 2),
+    "IBAN_CODE":     EntityConfig("[IBAN]",    "🟪", _threshold("THRESHOLD_IBAN_CODE",     0.50), 4),
+    "ORGANIZATION":  EntityConfig("[FIRMA]",   "🟧", _threshold("THRESHOLD_ORGANIZATION",  0.70), 4),
+    "ADDRESS":       EntityConfig("[ADRESSE]", "🟫", _threshold("THRESHOLD_ADDRESS",       0.55), 5),
 }
  
 
