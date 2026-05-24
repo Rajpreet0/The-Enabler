@@ -1,0 +1,77 @@
+{
+  "document": "invoice.txt",
+  "entities": [
+    {
+      "entity_type": "ORGANIZATION",
+      "start": 1,
+      "end": 48,
+      "text": "Handwerksbetrieb Thomas Müller\nSanitär & Heizung"
+    },
+    {
+      "entity_type": "ADDRESS",
+      "start": 49,
+      "end": 76,
+      "text": "Schulze-Delitzsch-Straße"
+    },
+    {
+      "entity_type": "LOCATION",
+      "start": 76,
+      "end": 92,
+      "text": "1270565 Stuttgart"
+    },
+    {
+      "entity_type": "PHONE_NUMBERS",
+      "start": 98,
+      "end": 113,
+      "text": "0711/456789-0"
+    },
+    {
+      "entity_type": "EMAIL_ADDRESS",
+      "start": 122,
+      "end": 156,
+      "text": "info@mueller-sanitaer-stuttgart.de"
+    },
+    {
+      "entity_type": "ADDRESS",
+      "start": 204,
+      "end": 234,
+      "text": "Königstraße 44"
+    },
+    {
+      "entity_type": "LOCATION",
+      "start": 218,
+      "end": 234,
+      "text": "70173 Stuttgart"
+    },
+    {
+      "entity_type": "PERSON",
+      "start": 561,
+      "end": 571,
+      "text": "Herr Janz"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "start": 1092,
+      "end": 1132,
+      "text": "Thomas Müller Sanitär"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "start": 1113,
+      "end": 1132,
+      "text": "Postbank Stuttgart"
+    },
+    {
+      "entity_type": "IBAN_CODE",
+      "start": 1132,
+      "end": 1166,
+      "text": "DE43 6001 0070 0123 4567 89"
+    },
+    {
+      "entity_type": "PERSON",
+      "start": 1245,
+      "end": 1258,
+      "text": "Thomas Müller"
+    }
+  ]
+}

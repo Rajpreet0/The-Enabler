@@ -1,0 +1,44 @@
+ANSTELLUNGSVERTRAG
+
+Zwischen der
+TechSolutions GmbH
+Erika-Mann-Str. 33, 80636 München
+vertreten durch den Geschäftsführer Herrn Dr. Michael Bauer
+– nachfolgend „Arbeitgeber“ genannt –
+
+und
+
+Herrn Sebastian Neumann
+geboren am 05.11.1991 in Augsburg
+wohnhaft in: Leopoldstraße 104, 80802 München
+– nachfolgend „Arbeitnehmer“ genannt –
+
+wird folgender Arbeitsvertrag geschlossen:
+
+§ 1 Beginn und Tätigkeit
+(1) Der Arbeitnehmer wird ab dem 01.07.2026 als Senior Cloud Architect in Vollzeit eingestellt.
+(2) Der Arbeitsort ist München. Der Arbeitnehmer verpflichtet sich, Dienstreisen im In- und Ausland zu unternehmen, sofern dies geschäftlich erforderlich ist.
+
+§ 2 Vergütung
+(1) Der Arbeitnehmer erhält eine Bruttomonatsvergütung von 6.850,00 EUR (in Worten: sechstausendachthundertfünfzig Euro). Die Vergütung wird am Ende eines jeden Monats bargeldlos auf das folgende Konto des Arbeitnehmers überwiesen:
+Inhaber: Sebastian Neumann
+IBAN: DE89 7002 0270 0019 2834 00
+BIC: SOLODEM1MUC
+Bank: Stadtsparkasse München
+
+§ 3 Arbeitszeit und Urlaub
+(1) Die regelmäßige wöchentliche Arbeitszeit beträgt 40 Stunden.
+(2) Der Arbeitnehmer hat Anspruch auf einen gesetzlichen und vertraglichen Erholungsurlaub von insgesamt 30 Arbeitstagen pro Kalenderjahr.
+
+§ 4 Nebenbestimmungen und Sozialversicherung
+(1) Der Arbeitnehmer ist bei der Techniker Krankenkasse (TK) versichert.
+(2) Seine Rentenversicherungsnummer lautet: 65 051191 N 042.
+(3) Die steuerlichen Merkmale sind: Steuer-ID: 84 920 183 742, Steuerklasse I.
+
+München, den 18.05.2026
+
+.........................................
+Dr. Michael Bauer (Arbeitgeber)
+
+.........................................
+Sebastian Neumann (Arbeitnehmer)
