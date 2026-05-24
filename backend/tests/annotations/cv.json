@@ -1,0 +1,131 @@
+{
+  "document": "cv.txt",
+  "entities": [
+    {
+      "entity_type": "PERSON",
+      "start": 20,
+      "end": 43,
+      "text": "Christiane Sommer-Vogel"
+    },
+    {
+      "entity_type": "LOCATION",
+      "start": 75,
+      "end": 82,
+      "text": "Dresden"
+    },
+    {
+      "entity_type": "ADDRESS",
+      "start": 129,
+      "end": 144,
+      "text": "Gorch-Fock-Wall"
+    },
+    {
+      "entity_type": "LOCATION",
+      "start": 150,
+      "end": 163,
+      "text": "20354 Hamburg"
+    },
+    {
+      "entity_type": "PHONE_NUMBERS",
+      "start": 174,
+      "end": 192,
+      "text": "+49 (0) 40 89721-33"
+    },
+    {
+      "entity_type": "PHONE_NUMBERS",
+      "start": 201,
+      "end": 212,
+      "text": "0172-8392019"
+    },
+    {
+      "entity_type": "EMAIL_ADDRESS",
+      "start": 221,
+      "end": 242,
+      "text": "c.sommer-vogel@web.de"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "start": 313,
+      "end": 336,
+      "text": "Asklepios Klinik Altona"
+    },
+    {
+      "entity_type": "LOCATION",
+      "start": 338,
+      "end": 345,
+      "text": "Hamburg"
+    },
+    {
+      "entity_type": "PERSON",
+      "start": 508,
+      "end": 521,
+      "text": "Sabine Werner"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "start": 583,
+      "end": 613,
+      "text": "Universitätsklinikum Eppendorf"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "start": 615,
+      "end": 618,
+      "text": "UKE"
+    },
+    {
+      "entity_type": "LOCATION",
+      "start": 621,
+      "end": 628,
+      "text": "Hamburg"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "start": 806,
+      "end": 841,
+      "text": "Albert-Ludwigs-Universität Freiburg"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "start": 915,
+      "end": 934,
+      "text": "Ärztekammer Hamburg"
+    },
+    {
+      "entity_type": "PERSON",
+      "start": 1108,
+      "end": 1120,
+      "text": "Thomas Meyer"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "start": 1148,
+      "end": 1174,
+      "text": "Vitzthum-Gymnasium Dresden"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "start": 1349,
+      "end": 1389,
+      "text": "Deutsche Gesellschaft für Innere Medizin"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "start": 1391,
+      "end": 1395,
+      "text": "DGIM"
+    },
+    {
+      "entity_type": "LOCATION",
+      "start": 1424,
+      "end": 1431,
+      "text": "Hamburg"
+    },
+    {
+      "entity_type": "PERSON",
+      "start": 1444,
+      "end": 1467,
+      "text": "Christiane Sommer-Vogel"
+    }
+  ]
+}

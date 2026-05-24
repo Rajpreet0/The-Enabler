@@ -1,0 +1,107 @@
+{
+  "document": "employment_contract.txt",
+  "entities": [
+    {
+      "entity_type": "ORGANIZATION",
+      "start": 33,
+      "end": 51,
+      "text": "TechSolutions GmbH"
+    },
+    {
+      "entity_type": "ADDRESS",
+      "start": 52,
+      "end": 70,
+      "text": "Erika-Mann-Str. 33"
+    },
+    {
+      "entity_type": "ADDRESS",
+      "start": 72,
+      "end": 85,
+      "text": "80636 München"
+    },
+    {
+      "entity_type": "PERSON",
+      "start": 132,
+      "end": 145,
+      "text": "Michael Bauer"
+    },
+    {
+      "entity_type": "PERSON",
+      "start": 196,
+      "end": 213,
+      "text": "Sebastian Neumann"
+    },
+    {
+      "entity_type": "LOCATION",
+      "start": 239,
+      "end": 247,
+      "text": "Augsburg"
+    },
+    {
+      "entity_type": "ADDRESS",
+      "start": 261,
+      "end": 278,
+      "text": "Leopoldstraße 104"
+    },
+    {
+      "entity_type": "ADDRESS",
+      "start": 280,
+      "end": 293,
+      "text": "80802 München"
+    },
+    {
+      "entity_type": "LOCATION",
+      "start": 522,
+      "end": 529,
+      "text": "München"
+    },
+    {
+      "entity_type": "PERSON",
+      "start": 914,
+      "end": 931,
+      "text": "Sebastian Neumann"
+    },
+    {
+      "entity_type": "IBAN_CODE",
+      "start": 938,
+      "end": 965,
+      "text": "DE89 7002 0270 0019 2834 00"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "start": 989,
+      "end": 1011,
+      "text": "Stadtsparkasse München"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "start": 1323,
+      "end": 1345,
+      "text": "Techniker Krankenkasse"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "start": 1347,
+      "end": 1349,
+      "text": "TK"
+    },
+    {
+      "entity_type": "LOCATION",
+      "start": 1504,
+      "end": 1511,
+      "text": "München"
+    },
+    {
+      "entity_type": "PERSON",
+      "start": 1575,
+      "end": 1588,
+      "text": "Michael Bauer"
+    },
+    {
+      "entity_type": "PERSON",
+      "start": 1646,
+      "end": 1663,
+      "text": "Sebastian Neumann"
+    }
+  ]
+}
