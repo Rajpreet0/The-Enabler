@@ -40,10 +40,35 @@ export const ENTITY_CONFIG: Record<string, EntityMeta> = {
     color: "bg-orange-100 text-orange-700 border-orange-200",
     anonymizeLabel: "[FIRMA]"
  },
-  ADDRESS:       { 
-    label: "Adresse", 
+  ADDRESS:       {
+    label: "Adresse",
     color: "bg-amber-100 text-amber-700 border-amber-200",
     anonymizeLabel: "[ADRESSE]"
+ },
+  TAX_CODE:             {
+    label: "Steuer-ID",
+    color: "bg-rose-100 text-rose-700 border-rose-200",
+    anonymizeLabel: "[STEUER_ID]"
+ },
+  BANK_ACCOUNT_NUMBER:  {
+    label: "Kontonummer",
+    color: "bg-sky-100 text-sky-700 border-sky-200",
+    anonymizeLabel: "[KONTO_NR]"
+ },
+  LICENSE_PLATE_NUMBER: {
+    label: "Kfz-Kennzeichen",
+    color: "bg-lime-100 text-lime-700 border-lime-200",
+    anonymizeLabel: "[KFZ]"
+ },
+  BIRTHDAY:             {
+    label: "Geburtstag",
+    color: "bg-teal-100 text-teal-700 border-teal-200",
+    anonymizeLabel: "[GEBURTSTAG]"
+ },
+  ID_CARD_NUMBER:       {
+    label: "Ausweis-Nr.",
+    color: "bg-violet-100 text-violet-700 border-violet-200",
+    anonymizeLabel: "[AUSWEIS_NR]"
  },
 };
 

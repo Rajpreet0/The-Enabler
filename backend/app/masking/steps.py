@@ -55,7 +55,54 @@ class FilterStep(PipelineStep):
 
 
 # ---------------------------------------------------------------------------
-# Step 2 — Address
+# Step 2 — Context filter: BIRTHDAY and BANK_ACCOUNT_NUMBER
+# ---------------------------------------------------------------------------
+
+_BIRTHDAY_KEYWORDS = {
+    "geboren", "geb.", "geburtsdatum", "geburtstag",
+    "birthdate", "dob", "geb am",
+}
+_BIRTHDAY_WINDOW = 60
+
+_BANK_KEYWORDS = {
+    "konto", "kontonummer", "konto-nr", "kto.", "kto-nr",
+    "girokonto", "bankverbindung", "bank account",
+}
+_BANK_WINDOW = 80
+
+
+class ContextFilterStep(PipelineStep):
+    """Drops BIRTHDAY and BANK_ACCOUNT_NUMBER hits that have no supporting
+    context keywords in a sliding window around the match.
+
+    Without context a date like "12.03.1985" could be any document date,
+    and a 10-digit number could be any reference number — these are only
+    meaningful as PII when labelled nearby (e.g. "Geburtsdatum", "Konto-Nr").
+    """
+
+    def run(self, results: list[RecognizerResult], text: str) -> list[RecognizerResult]:
+        text_lower = text.lower()
+        kept = []
+        for r in results:
+            if r.entity_type == "BIRTHDAY":
+                if not self._has_context(r, text_lower, _BIRTHDAY_KEYWORDS, _BIRTHDAY_WINDOW):
+                    continue
+            elif r.entity_type == "BANK_ACCOUNT_NUMBER":
+                if not self._has_context(r, text_lower, _BANK_KEYWORDS, _BANK_WINDOW):
+                    continue
+            kept.append(r)
+        return kept
+
+    @staticmethod
+    def _has_context(r: RecognizerResult, text_lower: str, keywords: set[str], window: int) -> bool:
+        start = max(0, r.start - window)
+        end = min(len(text_lower), r.end + window)
+        snippet = text_lower[start:end]
+        return any(kw in snippet for kw in keywords)
+
+
+# ---------------------------------------------------------------------------
+# Step 4 — Address
 # ---------------------------------------------------------------------------
 
 class AddressStep(PipelineStep):
@@ -87,7 +134,7 @@ class AddressStep(PipelineStep):
 
 
 # ---------------------------------------------------------------------------
-# Step 3 — Trim person spans
+# Step 5 — Trim person spans
 # ---------------------------------------------------------------------------
 
 class TrimPersonStep(PipelineStep):
@@ -117,7 +164,7 @@ class TrimPersonStep(PipelineStep):
 
 
 # ---------------------------------------------------------------------------
-# Step 4 — Propagate person names
+# Step 6 — Propagate person names
 # ---------------------------------------------------------------------------
 
 class PropagatePersonStep(PipelineStep):
@@ -164,7 +211,7 @@ class PropagatePersonStep(PipelineStep):
 
 
 # ---------------------------------------------------------------------------
-# Step 5 — Resolve overlaps
+# Step 7 — Resolve overlaps
 # ---------------------------------------------------------------------------
 
 class ResolveOverlapsStep(PipelineStep):
@@ -204,9 +251,10 @@ class ResolveOverlapsStep(PipelineStep):
 # ---------------------------------------------------------------------------
 
 DEFAULT_PIPELINE = MaskingPipeline([
-    FilterStep(),           # 1. Remove noise first
-    AddressStep(),          # 2. Add regex-based address hits
-    TrimPersonStep(),       # 3. Fix person spans bleeding into street names
-    PropagatePersonStep(),  # 4. Catch repeated names the NLP missed
-    ResolveOverlapsStep(),  # 5. Resolve any conflicts across all results
+    FilterStep(),           # 1. Remove noise and low-confidence hits
+    ContextFilterStep(),    # 2. Drop dates/accounts without supporting context
+    AddressStep(),          # 3. Add regex-based address hits
+    TrimPersonStep(),       # 4. Fix person spans bleeding into street names
+    PropagatePersonStep(),  # 5. Catch repeated names the NLP missed
+    ResolveOverlapsStep(),  # 6. Resolve any conflicts across all results
 ])

@@ -25,13 +25,18 @@ def _threshold(env_key: str, default: float) -> float:
 
 
 ENTITY_CONFIG: dict[str, EntityConfig] = {
-    "PERSON":        EntityConfig("[PERSON]",  "🟥", _threshold("THRESHOLD_PERSON",       0.80), 3),
-    "EMAIL_ADDRESS": EntityConfig("[EMAIL]",   "🟦", _threshold("THRESHOLD_EMAIL_ADDRESS", 0.50), 4),
-    "PHONE_NUMBER":  EntityConfig("[TELEFON]", "🟨", _threshold("THRESHOLD_PHONE_NUMBER",  0.50), 4),
-    "LOCATION":      EntityConfig("[ORT]",     "🟩", _threshold("THRESHOLD_LOCATION",      0.75), 2),
-    "IBAN_CODE":     EntityConfig("[IBAN]",    "🟪", _threshold("THRESHOLD_IBAN_CODE",     0.50), 4),
-    "ORGANIZATION":  EntityConfig("[FIRMA]",   "🟧", _threshold("THRESHOLD_ORGANIZATION",  0.70), 4),
-    "ADDRESS":       EntityConfig("[ADRESSE]", "🟫", _threshold("THRESHOLD_ADDRESS",       0.55), 5),
+    "PERSON":               EntityConfig("[PERSON]",     "🟥", _threshold("THRESHOLD_PERSON",       0.80), 5),
+    "EMAIL_ADDRESS":        EntityConfig("[EMAIL]",      "🟦", _threshold("THRESHOLD_EMAIL_ADDRESS", 0.50), 4),
+    "PHONE_NUMBER":         EntityConfig("[TELEFON]",    "🟨", _threshold("THRESHOLD_PHONE_NUMBER",  0.50), 4),
+    "LOCATION":             EntityConfig("[ORT]",        "🟩", _threshold("THRESHOLD_LOCATION",      0.85), 2),
+    "IBAN_CODE":            EntityConfig("[IBAN]",       "🟪", _threshold("THRESHOLD_IBAN_CODE",     0.50), 4),
+    "ORGANIZATION":         EntityConfig("[FIRMA]",      "🟧", _threshold("THRESHOLD_ORGANIZATION",  0.70), 3),
+    "ADDRESS":              EntityConfig("[ADRESSE]",    "🟫", _threshold("THRESHOLD_ADDRESS",              0.55), 5),
+    "TAX_CODE":             EntityConfig("[STEUER_ID]",  "🔴", _threshold("THRESHOLD_TAX_CODE",             0.85), 4),
+    "BANK_ACCOUNT_NUMBER":  EntityConfig("[KONTO_NR]",   "🔵", _threshold("THRESHOLD_BANK_ACCOUNT_NUMBER",  0.80), 4),
+    "LICENSE_PLATE_NUMBER": EntityConfig("[KFZ]",        "🟡", _threshold("THRESHOLD_LICENSE_PLATE_NUMBER", 0.90), 4),
+    "BIRTHDAY":             EntityConfig("[GEBURTSTAG]", "🟠", _threshold("THRESHOLD_BIRTHDAY",             0.85), 4),
+    "ID_CARD_NUMBER":       EntityConfig("[AUSWEIS_NR]", "🟣", _threshold("THRESHOLD_ID_CARD_NUMBER",       0.90), 4),
 }
  
 
@@ -67,3 +72,26 @@ ADDRESS_RE = re.compile(
 )
  
 PLZ_RE = re.compile(r"\b\d{5}\s+[A-ZÄÖÜ][a-zäöüß\-]+\b")
+
+# German Tax ID (Steueridentifikationsnummer)
+# 11 digits; first digit must not be 0. Separators (space or hyphen) optional.
+# Formats: 12345678901 | 12 345 678 901 | 12-345-678-901
+TAX_ID_RE = re.compile(r"\b(?!0)\d{2}[ -]?\d{3}[ -]?\d{3}[ -]?\d{3}\b")
+
+# German bank account number (Kontonummer)
+# 8–10 digit sequence, typically embedded in an IBAN — match only with word boundaries.
+BANK_ACC_NUMBER_RE = re.compile(r"\b\d{8,10}\b")
+
+# German vehicle license plate (Kfz-Kennzeichen)
+# Format: <district 1-3 letters> - <ID 1-2 letters> <number 1-4 digits> [E|H]
+# Umlauts supported in district code (e.g. GÖ, OÄ).
+# Optional E (Elektro) or H (Historisch) suffix.
+LICENSE_PLATE_NUMBER_RE = re.compile(r"\b[A-ZÄÖÜ]{1,3}-[A-Z]{1,2}[ -]?\d{1,4}[EH]?\b")
+
+# German date of birth
+# Supports DD.MM.YYYY, DD/MM/YYYY, DD.MM.YY, DD/MM/YY
+BIRTHDAY_RE = re.compile(r"\b(0[1-9]|[12]\d|3[01])[./](0[1-9]|1[012])[./](\d{4}|\d{2})\b")
+
+# German ID card number (Personalausweis, format since 2010)
+# 10 characters: 9 alphanumeric (subset) + 1 numeric check digit.
+ID_CARD_NUMBER_RE = re.compile(r"\b[C-FGHJKLMNPRSTV-XYZ0-9]{9}\d\b")

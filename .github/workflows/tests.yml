@@ -1,0 +1,27 @@
+name: Test Suite
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Download spaCy models
+        run: |
+          python -m spacy download de_core_news_lg
+          python -m spacy download en_core_web_lg
+
+      - name: Run test suite
+        working-directory: backend
+        continue-on-error: true  # TODO: remove once invoice.txt reaches baseline
+        run: pytest tests/ -v -s

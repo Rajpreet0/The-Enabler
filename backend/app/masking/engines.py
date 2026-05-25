@@ -4,7 +4,11 @@ from presidio_analyzer import AnalyzerEngine, PatternRecognizer, Pattern
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
 
-from .config import ADDRESS_RE, PLZ_RE
+from .config import (
+    ADDRESS_RE, PLZ_RE,
+    TAX_ID_RE, BANK_ACC_NUMBER_RE, LICENSE_PLATE_NUMBER_RE,
+    BIRTHDAY_RE, ID_CARD_NUMBER_RE,
+)
 from .transformer_recognizer import GermanFlairNERRecognizer
 
 # ---------------------------------------------------------------------------
@@ -38,6 +42,45 @@ def _build_org_recognizer() -> PatternRecognizer:
         supported_language="de",
     )
 
+def _build_tax_id_recognizer() -> PatternRecognizer:
+    return PatternRecognizer(
+        supported_entity="TAX_CODE",
+        patterns=[Pattern(name="de_tax_id", regex=TAX_ID_RE.pattern, score=0.85)],
+        supported_language="de",
+    )
+
+
+def _build_bank_account_recognizer() -> PatternRecognizer:
+    return PatternRecognizer(
+        supported_entity="BANK_ACCOUNT_NUMBER",
+        patterns=[Pattern(name="de_bank_account", regex=BANK_ACC_NUMBER_RE.pattern, score=0.80)],
+        supported_language="de",
+    )
+
+
+def _build_license_plate_recognizer() -> PatternRecognizer:
+    return PatternRecognizer(
+        supported_entity="LICENSE_PLATE_NUMBER",
+        patterns=[Pattern(name="de_license_plate", regex=LICENSE_PLATE_NUMBER_RE.pattern, score=0.90)],
+        supported_language="de",
+    )
+
+
+def _build_birthday_recognizer() -> PatternRecognizer:
+    return PatternRecognizer(
+        supported_entity="BIRTHDAY",
+        patterns=[Pattern(name="de_birthday", regex=BIRTHDAY_RE.pattern, score=0.85)],
+        supported_language="de",
+    )
+
+
+def _build_id_card_recognizer() -> PatternRecognizer:
+    return PatternRecognizer(
+        supported_entity="ID_CARD_NUMBER",
+        patterns=[Pattern(name="de_id_card", regex=ID_CARD_NUMBER_RE.pattern, score=0.90)],
+        supported_language="de",
+    )
+
 # ---------------------------------------------------------------------------
 # Engine initialisation — loaded once and cached for the process lifetime
 # ---------------------------------------------------------------------------
@@ -60,6 +103,11 @@ def get_engines() -> tuple[AnalyzerEngine, AnonymizerEngine]:
     analyzer = AnalyzerEngine(nlp_engine=nlp_engine, supported_languages=["en", "de"])
     analyzer.registry.add_recognizer(_build_address_recognizer())
     analyzer.registry.add_recognizer(_build_org_recognizer())
+    analyzer.registry.add_recognizer(_build_tax_id_recognizer())
+    analyzer.registry.add_recognizer(_build_bank_account_recognizer())
+    analyzer.registry.add_recognizer(_build_license_plate_recognizer())
+    analyzer.registry.add_recognizer(_build_birthday_recognizer())
+    analyzer.registry.add_recognizer(_build_id_card_recognizer())
     analyzer.registry.add_recognizer(GermanFlairNERRecognizer())
     anonymizer = AnonymizerEngine()
     return analyzer, anonymizer
