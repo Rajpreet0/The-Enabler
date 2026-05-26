@@ -78,20 +78,83 @@ class ContextFilterStep(PipelineStep):
     Without context a date like "12.03.1985" could be any document date,
     and a 10-digit number could be any reference number — these are only
     meaningful as PII when labelled nearby (e.g. "Geburtsdatum", "Konto-Nr").
+
+    For BIRTHDAY, a keyword is only counted when no other birthday candidate
+    sits closer to that keyword (nearest-date-wins). This prevents a normal
+    document date immediately before "Geburtsdatum: XX.XX.XXXX" from being
+    tagged as a birthday as well.
     """
 
     def run(self, results: list[RecognizerResult], text: str) -> list[RecognizerResult]:
         text_lower = text.lower()
+        birthday_candidates = [r for r in results if r.entity_type == "BIRTHDAY"]
         kept = []
         for r in results:
             if r.entity_type == "BIRTHDAY":
-                if not self._has_context(r, text_lower, _BIRTHDAY_KEYWORDS, _BIRTHDAY_WINDOW):
+                if not self._birthday_has_context(r, text_lower, birthday_candidates):
                     continue
             elif r.entity_type == "BANK_ACCOUNT_NUMBER":
                 if not self._has_context(r, text_lower, _BANK_KEYWORDS, _BANK_WINDOW):
                     continue
             kept.append(r)
         return kept
+
+    @staticmethod
+    def _birthday_has_context(
+        candidate: RecognizerResult,
+        text_lower: str,
+        all_candidates: list[RecognizerResult],
+    ) -> bool:
+        """Return True only when a supporting birthday keyword is found without
+        a closer date candidate "stealing" it.
+
+        Two cases are considered for each keyword occurrence K:
+
+        1. K comes BEFORE this candidate (the normal German label pattern,
+           e.g. "Geburtsdatum: 03.05.1990"): accepted unless another candidate
+           lies between K and this candidate.
+
+        2. K comes AFTER this candidate (e.g. "03.05.1990 (geb.)"): accepted
+           only when no other candidate has this K occurrence before it — i.e.
+           no other date would claim the keyword as a leading label.
+
+        This prevents a plain document date appearing just before "Geburtsdatum:"
+        from being tagged as a birthday when the keyword actually labels the
+        following date.
+        """
+        window_start = max(0, candidate.start - _BIRTHDAY_WINDOW)
+        window_end = min(len(text_lower), candidate.end + _BIRTHDAY_WINDOW)
+
+        for kw in _BIRTHDAY_KEYWORDS:
+            search_pos = window_start
+            while True:
+                pos = text_lower.find(kw, search_pos, window_end)
+                if pos == -1:
+                    break
+                kw_end = pos + len(kw)
+
+                if kw_end <= candidate.start:
+                    # Keyword precedes this candidate — accept unless another
+                    # candidate sits between the keyword and this one.
+                    interleaved = any(
+                        o is not candidate and kw_end <= o.start < candidate.start
+                        for o in all_candidates
+                    )
+                    if not interleaved:
+                        return True
+                else:
+                    # Keyword follows this candidate — only accept when no other
+                    # candidate could claim this keyword as a leading label.
+                    claimed_by_other = any(
+                        o is not candidate and kw_end <= o.start
+                        for o in all_candidates
+                    )
+                    if not claimed_by_other:
+                        return True
+
+                search_pos = pos + 1
+
+        return False
 
     @staticmethod
     def _has_context(r: RecognizerResult, text_lower: str, keywords: set[str], window: int) -> bool:
