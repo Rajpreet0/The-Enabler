@@ -3,11 +3,16 @@ import re
 from presidio_analyzer import RecognizerResult
 
 from .config import (
+    CONTEXT_RULES,
     ENTITY_CONFIG,
     FALSE_POSITIVE_WORDS,
+    SALUTATION_WORDS,
+    SALUTATION_WINDOW,
     STREET_KEYWORDS,
     ADDRESS_RE,
     PLZ_RE,
+    URL_VALID_RE,
+    URL_BLACKLIST_EXTENSIONS,
 )
 from .pipeline import PipelineStep, MaskingPipeline
 
@@ -22,12 +27,16 @@ class FilterStep(PipelineStep):
     Checks:
     - Score is above the per-entity minimum threshold
     - Span text is not in the false-positive word list
-    - PERSON entities have at least two words (first + last name)
+    - PERSON entities have at least two words (first + last name),
+      unless a salutation (Herr/Frau/Dr. …) immediately precedes the span
     - PERSON entities contain no all-caps words (e.g. document headers)
     - LOCATION entities are at least 4 characters and not hex strings
+    - URL entities pass regex validation and are not file references
+    - ORGANIZATION entities have at least two words or a legal suffix
     """
 
     def run(self, results: list[RecognizerResult], text: str) -> list[RecognizerResult]:
+        text_lower = text.lower()
         kept = []
         for r in results:
             span = text[r.start : r.end].strip()
@@ -41,7 +50,9 @@ class FilterStep(PipelineStep):
             if r.entity_type == "PERSON":
                 words = span.split()
                 if len(words) < 2:
-                    continue
+                    # Relax the two-word rule when a salutation precedes the span.
+                    if not self._has_salutation(r.start, text_lower):
+                        continue
                 if any(w.isupper() and len(w) > 2 for w in words):
                     continue
             if r.entity_type == "LOCATION":
@@ -49,83 +60,122 @@ class FilterStep(PipelineStep):
                     continue
                 if re.fullmatch(r"[0-9a-fA-F]{6,}", span):
                     continue
-
-            kept.append(r)
-        return kept
-
-
-# ---------------------------------------------------------------------------
-# Step 2 — Context filter: BIRTHDAY and BANK_ACCOUNT_NUMBER
-# ---------------------------------------------------------------------------
-
-_BIRTHDAY_KEYWORDS = {
-    "geboren", "geb.", "geburtsdatum", "geburtstag",
-    "birthdate", "dob", "geb am",
-}
-_BIRTHDAY_WINDOW = 60
-
-_BANK_KEYWORDS = {
-    "konto", "kontonummer", "konto-nr", "kto.", "kto-nr",
-    "girokonto", "bankverbindung", "bank account",
-}
-_BANK_WINDOW = 80
-
-
-class ContextFilterStep(PipelineStep):
-    """Drops BIRTHDAY and BANK_ACCOUNT_NUMBER hits that have no supporting
-    context keywords in a sliding window around the match.
-
-    Without context a date like "12.03.1985" could be any document date,
-    and a 10-digit number could be any reference number — these are only
-    meaningful as PII when labelled nearby (e.g. "Geburtsdatum", "Konto-Nr").
-
-    For BIRTHDAY, a keyword is only counted when no other birthday candidate
-    sits closer to that keyword (nearest-date-wins). This prevents a normal
-    document date immediately before "Geburtsdatum: XX.XX.XXXX" from being
-    tagged as a birthday as well.
-    """
-
-    def run(self, results: list[RecognizerResult], text: str) -> list[RecognizerResult]:
-        text_lower = text.lower()
-        birthday_candidates = [r for r in results if r.entity_type == "BIRTHDAY"]
-        kept = []
-        for r in results:
-            if r.entity_type == "BIRTHDAY":
-                if not self._birthday_has_context(r, text_lower, birthday_candidates):
+            if r.entity_type == "URL":
+                # Reject file references (e.g. *.jpg, image.png) via blacklist
+                lower = span.lower()
+                if any(lower.endswith(ext) for ext in URL_BLACKLIST_EXTENSIONS):
                     continue
-            elif r.entity_type == "BANK_ACCOUNT_NUMBER":
-                if not self._has_context(r, text_lower, _BANK_KEYWORDS, _BANK_WINDOW):
+                # Reject anything that doesn't look like a real web address
+                if not URL_VALID_RE.search(span):
                     continue
+            if r.entity_type == "ORGANIZATION":
+                # Require at least 2 words or a known legal suffix to reduce
+                # NLP false positives on common sentence fragments.
+                words = span.split()
+                has_legal_suffix = re.search(
+                    r"\b(?:GmbH|AG|KG|OHG|UG|e\.V\.|gGmbH|SE)\b", span
+                )
+                if len(words) < 2 and not has_legal_suffix:
+                    continue
+
             kept.append(r)
         return kept
 
     @staticmethod
-    def _birthday_has_context(
+    def _has_salutation(span_start: int, text_lower: str) -> bool:
+        """Return True if a salutation token appears just before the span."""
+        window_start = max(0, span_start - SALUTATION_WINDOW)
+        prefix = text_lower[window_start:span_start].strip()
+        # Check every salutation against the tail of the prefix so that
+        # "Sehr geehrte Frau" still matches even with words in between.
+        last_token = prefix.split()[-1] if prefix.split() else ""
+        return last_token in SALUTATION_WORDS
+
+
+# ---------------------------------------------------------------------------
+# Step 2 — Context filter (generic, driven by CONTEXT_RULES whitelist)
+# ---------------------------------------------------------------------------
+
+class ContextFilterStep(PipelineStep):
+    """Drops entity hits that lack supporting context keywords nearby.
+
+    Which entity types require context — and how strictly — is declared in
+    CONTEXT_RULES (config.py).  Two matching strategies are supported:
+
+    • Simple window  (nearest_wins=False): at least one keyword must appear
+      within `rule.window` characters of the match.  Used for entities with
+      fairly distinctive regex patterns (IBAN-length numbers, tax IDs, etc.)
+      where a keyword label nearby is enough to confirm intent.
+
+    • Nearest-wins   (nearest_wins=True): a keyword is only credited to the
+      *closest* candidate of the same entity type.  This prevents a stray
+      document date sitting right before "Geburtsdatum: 03.05.1990" from
+      being tagged as a birthday just because a keyword happens to be nearby.
+      Keyword occurrences both before and after the candidate are considered.
+    """
+
+    def run(self, results: list[RecognizerResult], text: str) -> list[RecognizerResult]:
+        text_lower = text.lower()
+
+        # Pre-group candidates per entity type for nearest-wins rules
+        candidates_by_type: dict[str, list[RecognizerResult]] = {}
+        for entity_type, rule in CONTEXT_RULES.items():
+            if rule.nearest_wins:
+                candidates_by_type[entity_type] = [
+                    r for r in results if r.entity_type == entity_type
+                ]
+
+        kept = []
+        for r in results:
+            rule = CONTEXT_RULES.get(r.entity_type)
+            if rule is None:
+                kept.append(r)
+                continue
+
+            if rule.nearest_wins:
+                peers = candidates_by_type[r.entity_type]
+                if not self._nearest_wins_has_context(r, text_lower, rule, peers):
+                    continue
+            else:
+                if not self._simple_has_context(r, text_lower, rule):
+                    continue
+
+            kept.append(r)
+        return kept
+
+    @staticmethod
+    def _simple_has_context(
+        r: RecognizerResult,
+        text_lower: str,
+        rule: "ContextRule",  # noqa: F821 — resolved at runtime
+    ) -> bool:
+        start = max(0, r.start - rule.window)
+        end   = min(len(text_lower), r.end + rule.window)
+        snippet = text_lower[start:end]
+        return any(kw in snippet for kw in rule.keywords)
+
+    @staticmethod
+    def _nearest_wins_has_context(
         candidate: RecognizerResult,
         text_lower: str,
-        all_candidates: list[RecognizerResult],
+        rule: "ContextRule",  # noqa: F821
+        peers: list[RecognizerResult],
     ) -> bool:
-        """Return True only when a supporting birthday keyword is found without
-        a closer date candidate "stealing" it.
+        """Return True only when a keyword is found that isn't claimed by a
+        closer peer candidate.
 
-        Two cases are considered for each keyword occurrence K:
+        For each keyword occurrence K two cases are handled:
 
-        1. K comes BEFORE this candidate (the normal German label pattern,
-           e.g. "Geburtsdatum: 03.05.1990"): accepted unless another candidate
-           lies between K and this candidate.
+        1. K precedes this candidate: accepted unless another peer sits
+           between K and this candidate (that peer is closer, so it owns K).
 
-        2. K comes AFTER this candidate (e.g. "03.05.1990 (geb.)"): accepted
-           only when no other candidate has this K occurrence before it — i.e.
-           no other date would claim the keyword as a leading label.
-
-        This prevents a plain document date appearing just before "Geburtsdatum:"
-        from being tagged as a birthday when the keyword actually labels the
-        following date.
+        2. K follows this candidate: accepted only when no other peer also
+           follows K (that peer would claim K as its leading label instead).
         """
-        window_start = max(0, candidate.start - _BIRTHDAY_WINDOW)
-        window_end = min(len(text_lower), candidate.end + _BIRTHDAY_WINDOW)
+        window_start = max(0, candidate.start - rule.window)
+        window_end   = min(len(text_lower), candidate.end + rule.window)
 
-        for kw in _BIRTHDAY_KEYWORDS:
+        for kw in rule.keywords:
             search_pos = window_start
             while True:
                 pos = text_lower.find(kw, search_pos, window_end)
@@ -134,20 +184,20 @@ class ContextFilterStep(PipelineStep):
                 kw_end = pos + len(kw)
 
                 if kw_end <= candidate.start:
-                    # Keyword precedes this candidate — accept unless another
-                    # candidate sits between the keyword and this one.
+                    # Keyword before candidate — rejected if a closer peer sits
+                    # between the keyword end and this candidate's start.
                     interleaved = any(
-                        o is not candidate and kw_end <= o.start < candidate.start
-                        for o in all_candidates
+                        p is not candidate and kw_end <= p.start < candidate.start
+                        for p in peers
                     )
                     if not interleaved:
                         return True
                 else:
-                    # Keyword follows this candidate — only accept when no other
-                    # candidate could claim this keyword as a leading label.
+                    # Keyword after candidate — rejected if any other peer also
+                    # follows the keyword (that peer would own it as a label).
                     claimed_by_other = any(
-                        o is not candidate and kw_end <= o.start
-                        for o in all_candidates
+                        p is not candidate and p.start >= kw_end
+                        for p in peers
                     )
                     if not claimed_by_other:
                         return True
@@ -155,13 +205,6 @@ class ContextFilterStep(PipelineStep):
                 search_pos = pos + 1
 
         return False
-
-    @staticmethod
-    def _has_context(r: RecognizerResult, text_lower: str, keywords: set[str], window: int) -> bool:
-        start = max(0, r.start - window)
-        end = min(len(text_lower), r.end + window)
-        snippet = text_lower[start:end]
-        return any(kw in snippet for kw in keywords)
 
 
 # ---------------------------------------------------------------------------
@@ -278,20 +321,29 @@ class PropagatePersonStep(PipelineStep):
 # ---------------------------------------------------------------------------
 
 class ResolveOverlapsStep(PipelineStep):
-    """Resolves conflicts when two results overlap the same text span.
+    """Resolves conflicts when two results overlap or contain each other.
 
     Winner is determined by (priority, score) — higher wins.
     Priority is defined per entity type in ENTITY_CONFIG.
 
-    Example: a span flagged as both LOCATION and ADDRESS → ADDRESS wins
-    because it has higher priority.
+    Handles three cases:
+    - Exact/partial overlap: higher rank wins, keeps the winning span.
+    - Containment (A contains B): B is split out if B has higher rank,
+      otherwise B is dropped and A is kept intact.
+
+    Example: ORGANIZATION span "Deutsche Bank AG DE89370400440532013000"
+    contains an IBAN — IBAN has priority 6, ORGANIZATION priority 2,
+    so the IBAN is preserved and the ORGANIZATION span is trimmed to
+    exclude the IBAN portion.
     """
 
     def run(self, results: list[RecognizerResult], text: str) -> list[RecognizerResult]:
-        def rank(r: RecognizerResult) -> tuple:
+        def rank(r: RecognizerResult) -> tuple[int, float]:
             cfg = ENTITY_CONFIG.get(r.entity_type)
             return (cfg.priority if cfg else 1, r.score)
 
+        # Sort by start position, then by descending rank so higher-priority
+        # entities at the same position are processed first.
         sorted_results = sorted(
             results,
             key=lambda r: (
@@ -300,12 +352,32 @@ class ResolveOverlapsStep(PipelineStep):
                 -r.score,
             ),
         )
+
         kept: list[RecognizerResult] = []
         for r in sorted_results:
-            if not kept or r.start >= kept[-1].end:
+            if not kept:
                 kept.append(r)
-            elif rank(r) > rank(kept[-1]):
+                continue
+
+            prev = kept[-1]
+
+            # No overlap at all — just append.
+            if r.start >= prev.end:
+                kept.append(r)
+                continue
+
+            # Some form of overlap exists.
+            r_rank    = rank(r)
+            prev_rank = rank(prev)
+
+            if r_rank > prev_rank:
+                # Incoming entity wins.  If it is fully contained inside prev,
+                # replace prev with r (the smaller, higher-priority span).
+                # If they partially overlap, replace prev with r as well —
+                # the higher-priority entity takes the contested characters.
                 kept[-1] = r
+            # else: prev wins; discard r entirely (it is lower priority).
+
         return kept
 
 

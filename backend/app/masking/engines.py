@@ -7,7 +7,7 @@ from presidio_anonymizer import AnonymizerEngine
 from .config import (
     ADDRESS_RE, PLZ_RE,
     TAX_ID_RE, BANK_ACC_NUMBER_RE, LICENSE_PLATE_NUMBER_RE,
-    BIRTHDAY_RE, ID_CARD_NUMBER_RE,
+    BIRTHDAY_RE, ID_CARD_NUMBER_RE, PHONE_RE,
 )
 from .transformer_recognizer import GermanFlairNERRecognizer
 
@@ -81,6 +81,14 @@ def _build_id_card_recognizer() -> PatternRecognizer:
         supported_language="de",
     )
 
+
+def _build_phone_recognizer() -> PatternRecognizer:
+    return PatternRecognizer(
+        supported_entity="PHONE_NUMBER",
+        patterns=[Pattern(name="de_phone", regex=PHONE_RE.pattern, score=0.75)],
+        supported_language="de",
+    )
+
 # ---------------------------------------------------------------------------
 # Engine initialisation — loaded once and cached for the process lifetime
 # ---------------------------------------------------------------------------
@@ -108,6 +116,7 @@ def get_engines() -> tuple[AnalyzerEngine, AnonymizerEngine]:
     analyzer.registry.add_recognizer(_build_license_plate_recognizer())
     analyzer.registry.add_recognizer(_build_birthday_recognizer())
     analyzer.registry.add_recognizer(_build_id_card_recognizer())
+    analyzer.registry.add_recognizer(_build_phone_recognizer())
     analyzer.registry.add_recognizer(GermanFlairNERRecognizer())
     anonymizer = AnonymizerEngine()
     return analyzer, anonymizer
