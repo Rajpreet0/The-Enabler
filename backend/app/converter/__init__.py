@@ -1,12 +1,10 @@
-"""converter — file-to-Markdown conversion package.
+"""converter — file-to-plain-text extraction package.
 
 Public API
 ----------
 extract_to_markdown(file, content_type, filename) -> str
 SUPPORTED_TYPES  : dict[str, str]   MIME type → file extension
 SUPPORTED_SUFFIXES : frozenset[str]  valid extensions for validation
-
-Everything else (formatters, registry) is internal.
 """
 
 from .config import SUPPORTED_TYPES, SUPPORTED_SUFFIXES

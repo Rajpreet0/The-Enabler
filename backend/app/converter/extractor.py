@@ -1,4 +1,4 @@
-"""converter/extractor.py — converts uploaded files to Markdown text."""
+"""converter/extractor.py — extracts plain text from uploaded files."""
 
 import os
 import tempfile
@@ -8,15 +8,14 @@ from typing import BinaryIO
 from unstructured.partition.auto import partition
 
 from .config import SUPPORTED_TYPES
-from .formatters import element_to_markdown
 
 
 def extract_to_markdown(file: BinaryIO, content_type: str, filename: str) -> str:
-    """Parse a binary file into a Markdown string.
+    """Parse a binary file into a plain-text string.
 
-    Writes the file to a temporary path so that unstructured can infer
-    the correct parser from the file extension, then converts each
-    element to Markdown using the formatter registry.
+    Each unstructured Element already exposes its content as a plain
+    ``el.text`` string — no Markdown conversion is needed.  Elements are
+    joined with blank lines to preserve paragraph structure for NLP.
 
     Args:
         file:         Binary file-like object (e.g. from UploadFile.file).
@@ -24,12 +23,11 @@ def extract_to_markdown(file: BinaryIO, content_type: str, filename: str) -> str
         filename:     Original filename, used as a fallback for extension detection.
 
     Returns:
-        A single Markdown string with all extracted content joined by
+        A single plain-text string with all extracted content joined by
         blank lines.
     """
     suffix = SUPPORTED_TYPES.get(content_type)
     if suffix is None:
-        # Fallback: derive extension from the original filename
         suffix = Path(filename).suffix.lower() or ".bin"
 
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
@@ -41,5 +39,4 @@ def extract_to_markdown(file: BinaryIO, content_type: str, filename: str) -> str
     finally:
         os.unlink(tmp_path)
 
-    lines = [element_to_markdown(el) for el in elements]
-    return "\n\n".join(line for line in lines if line)
+    return "\n\n".join(el.text.strip() for el in elements if el.text and el.text.strip())

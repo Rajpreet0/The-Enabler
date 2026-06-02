@@ -20,10 +20,15 @@ export const ENTITY_CONFIG: Record<string, EntityMeta> = {
     color: "bg-blue-100 text-blue-700 border-blue-200",
     anonymizeLabel: "[EMAIL]"
  },
-  PHONE_NUMBER:  { 
-    label: "Telefon", 
+  PHONE_NUMBER:  {
+    label: "Telefon",
     color: "bg-yellow-100 text-yellow-700 border-yellow-200",
     anonymizeLabel: "[TELEFON]"
+ },
+  URL: {
+    label: "Webseite",
+    color: "bg-cyan-100 text-cyan-700 border-cyan-200",
+    anonymizeLabel: "[WEBSEITE]"
  },
   LOCATION:      { 
     label: "Ort",     
